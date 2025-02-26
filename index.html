@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
     <title>To Do Decentralized Application</title>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.1/dist/ethers.umd.min.js" type="application/javascript"></script>
     <script src="main.js"></script>
@@ -112,7 +113,7 @@
             margin: 0 auto;
         }
 
-        #myTable th,
+        #myTable th,d
         #myTable td {
             border: 1px solid black;
             padding: 8px;
@@ -126,29 +127,91 @@
     </style>
 </head>
 <body>
-    <div class="navbar">
-        <a href="/index.html">Vote</a>
-        <a href="/ListVoters.html">List Voters</a>
+    <nav style="background-color: #333; padding: 10px; color: white; display: flex;">
+        <a href="#" style="color: white; margin-right: 20px;">Vote</a>
+        <a href="#" style="color: white;">List Voters</a>
+    </nav>
+
+    <div style="text-align: center; margin-top: 20px;">
+        <video id="video" width="640" height="480" autoplay></video>
+        <canvas id="canvas" width="640" height="480" style="display: none;"></canvas>
+        <br>
+        <button id="capture" style="background-color: green; color: white; padding: 10px; border: none; margin-top: 10px; cursor: pointer;">
+            Capture Face
+        </button>
+        <p id="faceStatus" style="margin-top: 10px;"></p>
+        <br>
+        <button id="voteButton" style="background-color: blue; color: white; padding: 10px; border: none; cursor: pointer;" disabled>
+            Vote Now
+        </button>
     </div>
 
-    <div class="container">Welcome to the Decentralized Voting Application</div>
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const captureButton = document.getElementById('capture');
+        const faceStatus = document.getElementById('faceStatus');
+        const voteButton = document.getElementById('voteButton');
 
-    <div>
-        <button onclick="connectMetamask()">Connect Metamask</button>
-        <p id="metamasknotification"></p>
-    </div>
+        let voterId = null;  // Store the voter ID if recognized
 
-    <div class="container">
-        <span>Vote here</span>
-        <input type="number" id="vote" placeholder="Add Index of the Voter ... ">
-        <button onclick="addVote()">Add Vote</button>
-        <p id="cand"></p>
-    </div>
-    
-    <div>
-        <button onclick="voteStatus()">Check Voting Status</button>
-        <p id="status"></p>
-        <p id="time"></p>
-    </div>
+        // Start video stream
+        async function startVideo() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (error) {
+                console.error("Camera access denied:", error);
+                faceStatus.innerText = "❌ Camera access denied. Please enable camera permissions.";
+            }
+        }
+
+        startVideo(); // Initialize camera feed
+
+        // Capture face when button is clicked
+        captureButton.addEventListener('click', () => {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvas.toDataURL('image/png'); // Convert image to base64
+
+            fetch('http://127.0.0.1:5000/verify_face', {  // Flask API endpoint for face verification
+                method: 'POST',
+                body: JSON.stringify({ image: imageData }),
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.verified) {
+                    voterId = data.voter_id; // Store voter ID from backend
+                    faceStatus.innerText = `✅ Face recognized! Welcome, ${data.name}. You can vote.`;
+                    voteButton.disabled = false;  // Enable voting
+                } else {
+                    faceStatus.innerText = "❌ Face not recognized! Access denied.";
+                    voteButton.disabled = true;
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        // Send vote request when "Vote Now" button is clicked
+        voteButton.addEventListener('click', () => {
+            if (!voterId) {
+                alert("❌ You must verify your face first.");
+                return;
+            }
+
+            fetch('http://127.0.0.1:5000/vote', {  // Flask API endpoint for voting
+                method: 'POST',
+                body: JSON.stringify({ voter_id: voterId }),
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message); // Show success or error message
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
 </body>
 </html>
+
