@@ -1,13 +1,14 @@
-# Sample Hardhat Project
+# E-Voting APP Using BlockChain
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.
+This project demonstrates a use case of Hardhat, Node.js, and Solidity for BlockChain. It comes with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.
 
 Try running some of the following tasks:
 
 ```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat ignition deploy ./ignition/modules/Lock.js
+npm init
+npm install --save-dev hardhat
+npx hardhat init
+npm install --save dev "download_required_dependencied"
+npx hardhat run --network volta scripts/deploy.js  
+node index.js //
 ```
