@@ -8,7 +8,7 @@ Try running some of the following tasks:
 npm init
 npm install --save-dev hardhat
 npx hardhat init
-npm install --save dev "download_required_dependencied"
+npm install --save dev "download_required_dependencies"
 npx hardhat run --network volta scripts/deploy.js  
 node index.js //
 ```
