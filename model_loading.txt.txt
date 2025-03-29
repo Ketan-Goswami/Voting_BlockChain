@@ -1,0 +1,31 @@
+// 1. Load Required Models
+async function loadModels() {
+    await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
+    
+}
+
+// 2. Detect Face in Image
+async function detectFace(image) {
+    const detection = await faceapi.detectSingleFace(image)
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+    return detection;
+}
+
+// 3. Compare Faces
+async function compareFaces(referencePhoto, capturedPhoto) {
+    // Get face descriptors
+    const ref = await detectFace(referencePhoto);
+    const cap = await detectFace(capturedPhoto);
+    
+    if (ref && cap) {
+        // Calculate distance between face descriptors
+        const distance = faceapi.euclideanDistance(
+            ref.descriptor,
+            cap.descriptor
+        );
+        // Lower distance = better match
+        return distance < 0.6;
+    }
+    return false;
+}

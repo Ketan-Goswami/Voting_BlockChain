@@ -1,8 +1,6 @@
 async function loadFaceAPI() {
     await faceapi.nets.ssdMobilenetv1.loadFromUri('/models');
-    await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
-    await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
-    console.log("Face API Models Loaded!");
+    console.log("Models Loaded through API ! ");
 }
 
 loadFaceAPI();

@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 # Simulated registered users (Replace with a real database)
-registered_users = {"123": "John Doe"}
+registered_users = {"12345": "Aditya Bapat" , "12346": "Abhinav singh", "12347": "Rishi" }
 
 @app.route('/verify_face', methods=['POST'])
 def verify_face():
@@ -13,8 +13,8 @@ def verify_face():
     if not image:
         return jsonify({"verified": False, "message": "No image received"}), 400
 
-    # Simulating face recognition (Replace this with actual ML model)
-    voter_id = "123"  # Example voter ID for testing
+    
+    voter_id = "12345"  # Example voter ID for testing
     if voter_id in registered_users:
         return jsonify({"verified": True, "voter_id": voter_id, "name": registered_users[voter_id]})
     else:
