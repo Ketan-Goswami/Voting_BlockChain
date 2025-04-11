@@ -30,7 +30,7 @@ async function connectToMongoDB() {
 
 connectToMongoDB();
 
-const provider = new ethers.providers.JsonRpcProvider(API_URL);
+const provider = new ethers.JsonRpcProvider(API_URL);
 const signer = new ethers.Wallet(PRIVATE_KEY, provider);
 const contractInstance = new ethers.Contract(CONTRACT_ADDRESS, votingArtifact.abi, signer);
 
