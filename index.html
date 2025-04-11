@@ -148,7 +148,8 @@
                     return;
                 }
 
-                const body = { voter_Name, adhar_Number, dateOfBirth, address };
+                const body = { adhar_Number };
+
 
                 try {
                     const response = await fetch("/login", {

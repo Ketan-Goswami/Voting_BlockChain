@@ -14,19 +14,19 @@ def encode_faces():
     known_faces = []
     known_names = []
 
-    for name in os.listdir(KNOWN_FACES_DIR):
-        person_dir = os.path.join(KNOWN_FACES_DIR, name)
-        if not os.path.isdir(person_dir):
+    for filename in os.listdir(KNOWN_FACES_DIR):
+        filepath = os.path.join(KNOWN_FACES_DIR, filename)
+        if not filename.lower().endswith((".jpg", ".jpeg", ".png")):
             continue
-        
-        for filename in os.listdir(person_dir):
-            filepath = os.path.join(person_dir, filename)
-            image = face_recognition.load_image_file(filepath)
-            encodings = face_recognition.face_encodings(image)
 
-            if len(encodings) > 0:
-                known_faces.append(encodings[0])
-                known_names.append(name)
+        # Filename is Aadhaar number
+        name = os.path.splitext(filename)[0]
+        image = face_recognition.load_image_file(filepath)
+        encodings = face_recognition.face_encodings(image)
+
+        if len(encodings) > 0:
+            known_faces.append(encodings[0])
+            known_names.append(name)
     
     # Save encodings to a file
     with open(ENCODINGS_FILE, "wb") as f:
