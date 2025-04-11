@@ -2,7 +2,7 @@ const hre = require("hardhat");
 
 async function main() {
     const Voting = await hre.ethers.getContractFactory("Voting");
-    const Voting_ = await Voting.deploy(["Mark", "Mike", "George"], 60);
+    const Voting_ = await Voting.deploy(["Mark", "Mike", "George"], 15);
 
     console.log(
         `Contract Address : ${await Voting_.getAddress()}`
