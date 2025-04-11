@@ -3,7 +3,7 @@
 */
 
 require('dotenv').config();
-require("@nomiclabs/hardhat-ethers");
+require("@nomicfoundation/hardhat-ethers");
 
 const { API_URL, PRIVATE_KEY } = process.env;
 
@@ -15,8 +15,8 @@ module.exports = {
       volta: {
          url: API_URL,
          accounts: [`0x${PRIVATE_KEY}`],
-         gas: 210000000,
-         gasPrice: 800000000000,
+         gas: 5000000,
+         gasPrice: 1000000000, // 1 gwei
       }
    },
 }
