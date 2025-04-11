@@ -4,10 +4,9 @@ async function main() {
     const Voting = await hre.ethers.getContractFactory("Voting");
     const Voting_ = await Voting.deploy(["Mark", "Mike", "George"], 60);
 
-    await Voting_.deployed();
 
     console.log(
-        `Contract Address : ${Voting_.address}`
+        `Contract Address : ${await Voting_.getAddress()}`
     );
 }
 

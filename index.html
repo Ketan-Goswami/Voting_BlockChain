@@ -1,15 +1,4 @@
 <!DOCTYPE html>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const form = document.querySelector("form");
-        form.addEventListener("submit", function(event) {
-            event.preventDefault(); // Prevent form submission
-            // Add your login validation logic here
-            // If login is successful, redirect to ml.html
-            window.location.href = "ml.html";
-        });
-    });
-</script>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -27,25 +16,25 @@
             margin: 0;
             padding: 0;
         }
-        
+
         .navbar {
             background-color: #2c3e50;
             padding: 14px 0;
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
         }
-        
+
         .navbar a {
             color: white;
             text-decoration: none;
             padding: 14px 20px;
             font-size: 18px;
         }
-        
+
         .navbar a:hover {
             background-color: #34495e;
             border-radius: 5px;
         }
-        
+
         .container {
             background: white;
             width: 50%;
@@ -54,7 +43,7 @@
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
-        
+
         header {
             background-color: #34495e;
             color: white;
@@ -70,7 +59,7 @@
             height: 50px;
             margin-right: 15px;
         }
-        
+
         footer {
             background-color: #2c3e50;
             color: white;
@@ -81,11 +70,11 @@
             text-align: center;
             margin-top: 40px;
         }
-        
+
         h1 {
             color: #2c3e50;
         }
-        
+
         button {
             background-color: #27ae60;
             color: white;
@@ -102,13 +91,18 @@
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
             border-radius: 10px;
         }
-        
+
         input {
             width: 80%;
             padding: 10px;
             margin: 10px 0;
             border: 2px solid #ccc;
             border-radius: 5px;
+        }
+
+        .error {
+            color: red;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -120,17 +114,60 @@
 
     <div class="container">
         <h1>Login</h1>
-        <form>
+        <form id="loginForm">
             <input type="text" id="voterid" placeholder="Enter Voter ID" required><br>
-            <input type="text" id="aadhaarid" placeholder="Enter Aadhaar ID" required><br>
+            <input type="text" id="aadhaarid" placeholder="Enter Aadhaar ID (XXXX XXXX XXXX XXXX)" required><br>
             <input type="date" id="dob" placeholder="Enter Date of Birth" required><br>
             <input type="text" id="locality" placeholder="Enter Place of Residence/Voting Locality" required><br>
             <button type="submit">Login</button>
+            <div id="errorMessage" class="error"></div>
         </form>
     </div>
 
     <footer>
         © 2025 E-Voting Application. All Rights Reserved.
     </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.getElementById("loginForm");
+            const errorMessage = document.getElementById("errorMessage");
+
+            form.addEventListener("submit", async function (event) {
+                event.preventDefault();
+
+                const voter_Name = document.getElementById("voterid").value.trim();
+                const adhar_Number = document.getElementById("aadhaarid").value.trim();
+                const dateOfBirth = document.getElementById("dob").value;
+                const address = document.getElementById("locality").value.trim();
+
+                // Aadhaar format validation
+                const aadhaarPattern = /^\d{4} \d{4} \d{4} \d{4}$/;
+                if (!aadhaarPattern.test(adhar_Number)) {
+                    alert("Invalid Aadhaar number format.\nCorrect format: XXXX XXXX XXXX XXXX");
+                    return;
+                }
+
+                const body = { voter_Name, adhar_Number, dateOfBirth, address };
+
+                try {
+                    const response = await fetch("/login", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(body),
+                    });
+
+                    if (response.ok) {
+                        window.location.href = "ML.html";
+                    } else {
+                        const text = await response.text();
+                        errorMessage.textContent = text;
+                    }
+                } catch (err) {
+                    errorMessage.textContent = "Error: " + err.message;
+                }
+            });
+        });
+    </script>
 </body>
 </html>

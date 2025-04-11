@@ -5,6 +5,7 @@ const path = require('path');
 const { ethers } = require('ethers');
 const mongoose = require('mongoose');
 const votingArtifact = require('./artifacts/contracts/Voting.sol/Voting.json');
+const User = require('./user_schema'); // Assuming user_schema is in the models folder
 
 const app = express();
 app.use(fileUpload({ extended: true }));
@@ -36,6 +37,60 @@ const contractInstance = new ethers.Contract(CONTRACT_ADDRESS, votingArtifact.ab
 
 app.get(["/", "/index.html"], (req, res) => {
     res.sendFile(path.join(__dirname, "index.html"));
+});
+
+app.post("/login", async (req, res) => {
+    const { voter_Name, adhar_Number, dateOfBirth, address } = req.body;
+
+    try {
+        const user = await User.findOne({ voter_Name });
+        if (!user) {
+            return res.status(404).send("User not found");
+        }
+        if (user.adhar_Number !== adhar_Number) {
+            return res.status(401).send("Invalid Aadhaar number");
+        }
+        if (new Date(user.dateOfBirth).toISOString().slice(0,10) !== new Date(dateOfBirth).toISOString().slice(0,10)) {
+            return res.status(401).send("Invalid date of birth");
+        }
+        if (user.address !== address) {
+            return res.status(401).send("Invalid address");
+        }
+
+        res.redirect("/ML.html");
+    } catch (err) {
+        console.error("Error during login:", err.message);
+        res.status(500).send("Internal server error");
+    }
+});
+app.post("/register", async (req, res) => {
+    const { voter_Name, adhar_Number, dateOfBirth, address } = req.body;
+
+    if (!voter_Name || !adhar_Number || !dateOfBirth || !address) {
+        return res.status(400).send("All fields are required.");
+    }
+
+    try {
+        // Check if the user already exists
+        const existingUser = await User.findOne({ voter_Name });
+        if (existingUser) {
+            return res.status(409).send("User already exists.");
+        }
+
+        // Create and save new user
+        const newUser = new User({
+            voter_Name,
+            adhar_Number,
+            dateOfBirth: new Date(dateOfBirth),
+            address,
+        });
+
+        await newUser.save();
+        res.status(201).send("User registered successfully.");
+    } catch (error) {
+        console.error("Error during registration:", error.message);
+        res.status(500).send("Internal server error");
+    }
 });
 
 app.post("/addCandidate", async (req, res) => {
