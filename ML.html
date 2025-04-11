@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-Voting Application</title>
+    <title>Voter Authentication</title>
     <link rel="icon" type="image/png" href="favicon.jpg">
-    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.1/dist/ethers.umd.min.js" type="application/javascript"></script>
-    <script src="main.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -16,25 +14,25 @@
             margin: 0;
             padding: 0;
         }
-        
+
         .navbar {
             background-color: #2c3e50;
             padding: 14px 0;
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
         }
-        
+
         .navbar a {
             color: white;
             text-decoration: none;
             padding: 14px 20px;
             font-size: 18px;
         }
-        
+
         .navbar a:hover {
             background-color: #34495e;
             border-radius: 5px;
         }
-        
+
         .container {
             background: white;
             width: 50%;
@@ -43,7 +41,7 @@
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
-        
+
         header {
             background-color: #34495e;
             color: white;
@@ -59,25 +57,26 @@
             height: 50px;
             margin-right: 15px;
         }
-        
+
         footer {
             background-color: #2c3e50;
             color: white;
             padding: 15px;
-            position: relative;
+            position: absolute;
             bottom: 0;
             width: 100%;
             text-align: center;
             margin-top: 40px;
         }
-        
-        h1 {
+
+        h2 {
             color: #2c3e50;
         }
-        
+
         button {
             background-color: #27ae60;
             color: white;
+            padding: 12px 20px;
             border: none;
             border-radius: 0;
             cursor: pointer;
@@ -90,41 +89,237 @@
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
             border-radius: 10px;
         }
-        
-        input {
-            width: 80%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 2px solid #ccc;
-            border-radius: 5px;
-        }
-        
-        #myTable {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
+
+        #video, #canvas {
+            border: 2px solid #333;
+            margin: 10px;
         }
 
-        #myTable th, #myTable td {
-            border: 1px solid black;
-            padding: 10px;
-            text-align: center;
+        #capturedPhoto {
+            margin: 10px;
+            max-width: 640px;
+            display: none;
         }
-        
-        #myTable th {
-            background-color: #27ae60;
+
+        #status {
+            margin: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        #voteButton {
+            background-color: #4CAF50;
             color: white;
+            border: none;
+            border-radius: 5px;
+            display: none;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1/dist/face-api.js"></script>
 </head>
 <body>
-    <div class="container">Welcome to the Decentralized Voting Application</div>
+    <header>
+        <img src="favicon.jpg" alt="Voting Application Logo">
+        E-Voting Application
+    </header>
 
-    tatus()">Check Voting Status</button>
-        <p id="status"></p>
-        <p id="time"></p>
+    <div class="container">
+        <h2>Voter Photo Authentication</h2>
+        
+        <!-- Video feed -->
+        <video id="video" width="640" height="480" autoplay></video>
+        
+        <!-- Canvas for capturing photo -->
+        <canvas id="canvas" width="640" height="480" style="display: none;"></canvas>
+        
+        <!-- Display captured photo -->
+        <img id="capturedPhoto" alt="Captured photo will appear here">
+        
+        <div>
+            <button id="capture">Capture Photo</button>
+            <button id="voteButton">Vote Now</button>
+        </div>
+        
+        <div id="status">Please capture your photo</div>
     </div>
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const capturedPhoto = document.getElementById('capturedPhoto');
+        const ctx = canvas.getContext('2d');
+        const captureButton = document.getElementById('capture');
+        const voteButton = document.getElementById('voteButton');
+        const status = document.getElementById('status');
 
+        let isModelLoaded = false;
+        let matchFound = false;
+
+        // voters to vote for
+        const voterIds = ['12345', '12346'];
+
+        // Add this right after the voterIds declaration
+        console.log("Registered voter IDs:", voterIds);
+
+        // Updated loadModels function with new CDN path
+        async function loadModels() {
+            status.textContent = "Starting to load models...";
+            try {
+                console.log("Loading SSD MobileNet model...");
+                await faceapi.nets.ssdMobilenetv1.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1/model/');
+                console.log("SSD MobileNet loaded successfully");
+
+                console.log("Loading Face Landmark model...");
+                await faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1/model/');
+                console.log("Face Landmark model loaded successfully");
+
+                console.log("Loading Face Recognition model...");
+                await faceapi.nets.faceRecognitionNet.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1/model/');
+                console.log("Face Recognition model loaded successfully");
+
+                isModelLoaded = true;
+                status.textContent = "Model loaded. Camera starting...";
+                console.log(" model loaded successfully");
+            } catch (error) {
+                console.error("Detailed error loading models:", error);
+                status.textContent = "❌ Error loading face detection models";
+            }
+        }
+
+        // Start video stream
+        async function startVideo() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                status.textContent = "Camera ready. Please capture your photo.";
+            } catch (error) {
+                console.error("Camera access denied:", error);
+                status.textContent = "❌ Camera access denied. Please enable camera permissions.";
+            }
+        }
+
+        // Start everything
+        async function initialize() {
+            await loadModels();
+            await startVideo();
+        }
+
+        initialize();
+
+        // Modified capture photo function
+        captureButton.addEventListener('click', async () => {
+            console.log("Current model status:", isModelLoaded);
+            if (!isModelLoaded) {
+                status.textContent = "Please wait for models to load...";
+                console.log("Models not yet loaded. Attempting to load again...");
+                await loadModels();
+                return;
+            }
+
+            // Draw video frame to canvas
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            try {
+                // Detect face in the captured image
+                const detections = await faceapi.detectSingleFace(canvas)
+                    .withFaceLandmarks()
+                    .withFaceDescriptor();
+                
+                if (!detections) {
+                    status.textContent = "❌ No face detected. Please try again.";
+                    return;
+                }
+
+                // Show captured photo
+                capturedPhoto.src = canvas.toDataURL('image/jpeg');
+                capturedPhoto.style.display = 'block';
+                
+                let matchFound = false;
+                let atLeastOnePhotoProcessed = false;
+
+                // Try matching with each voter photo
+                for (const voterId of voterIds) {
+                    const voterImage = new Image();
+                    voterImage.src = `/static/images/reference_photos/voter_photos/${voterId}.jpg`;
+                    console.log("Attempting to load image from:", voterImage.src);
+                    
+                    try {
+                        await new Promise((resolve, reject) => {
+                            voterImage.onload = async () => {
+                                try {
+                                    const voterCanvas = document.createElement('canvas');
+                                    voterCanvas.width = voterImage.width;
+                                    voterCanvas.height = voterImage.height;
+                                    const voterCtx = voterCanvas.getContext('2d');
+                                    voterCtx.drawImage(voterImage, 0, 0);
+
+                                    const voterDetections = await faceapi.detectSingleFace(voterCanvas)
+                                        .withFaceLandmarks()
+                                        .withFaceDescriptor();
+
+                                    if (voterDetections) {
+                                        atLeastOnePhotoProcessed = true;
+                                        const distance = faceapi.euclideanDistance(
+                                            detections.descriptor,
+                                            voterDetections.descriptor
+                                        );
+
+                                        console.log(`Face match distance for voter ${voterId}:`, distance);
+                                        
+                                        if (distance < 0.6) {
+                                            matchFound = true;
+                                            resolve();
+                                            return;
+                                        }
+                                    }
+                                    resolve();
+                                } catch (error) {
+                                    console.error(`Error processing voter photo ${voterId}:`, error);
+                                    reject(error);
+                                }
+                            };
+                            
+                            voterImage.onerror = (error) => {
+                                console.error(`Error loading voter photo ${voterId}:`, error);
+                                console.log("Failed to load:", voterImage.src);
+                                reject(error);
+                            };
+                        });
+
+                    } catch (error) {
+                        console.error(`Error processing voter ${voterId}:`, error);
+                        continue;
+                    }
+
+                    // Add this in the face matching loop
+                    console.log(`Processing voter ID ${voterId}, match status: ${matchFound}`);
+                }
+
+                // Update UI based on match result
+                if (!atLeastOnePhotoProcessed) {
+                    status.textContent = "❌ Error: No reference photos could be processed";
+                    voteButton.style.display = 'none';
+                    return;
+                }
+
+                if (matchFound) {
+                    voteButton.style.display = 'inline-block';
+                    status.textContent = "✅ Identity verified! You can now vote.";
+                } else {
+                    voteButton.style.display = 'none';
+                    status.textContent = "❌ Face not recognized. Please try again.";
+                }
+
+            } catch (error) {
+                console.error("Error during face detection:", error);
+                status.textContent = "❌ Error verifying identity. Please try again.";
+            }
+        });
+
+        // Navigate to ListVoters.html 
+        voteButton.addEventListener('click', () => {
+            window.location.href = 'vote.html';
+        });
+    </script>
     <footer>
         © 2025 E-Voting Application. All Rights Reserved.
     </footer>
