@@ -131,6 +131,36 @@
         <p id="status"></p>
         <p id="time"></p>
     </div>
+    <div>
+        <a href="/index.html" onclick="logout()">Logout</a>
+        <script>
+            function logout() {
+            localStorage.clear();
+            sessionStorage.clear();
+            alert("You have been logged out.");
+            window.location.href = "/login.html";
+            console.log("User logged out");
+            }
+        </script>
+        <style>
+            a[href="/index.html"] {
+            display: inline-block;
+            background-color: #dc3545;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: 0.3s;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+            }
+
+            a[href="/index.html"]:hover {
+            background-color: #c82333;
+            }
+        </style>
+    </div>
     <footer>
         © 2025 E-Voting Application. All Rights Reserved.
     </footer>
