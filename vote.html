@@ -1,20 +1,9 @@
 <!DOCTYPE html>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const form = document.querySelector("form");
-        form.addEventListener("submit", function(event) {
-            event.preventDefault(); // Prevent form submission
-            // Add your login validation logic here
-            // If login is successful, redirect to ml.html
-            window.location.href = "ml.html";
-        });
-    });
-</script>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - E-Voting Application</title>
+    <title>E-Voting Application</title>
     <link rel="icon" type="image/png" href="favicon.jpg">
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.1/dist/ethers.umd.min.js" type="application/javascript"></script>
     <script src="main.js"></script>
@@ -110,6 +99,23 @@
             border: 2px solid #ccc;
             border-radius: 5px;
         }
+        
+        #myTable {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        #myTable th, #myTable td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: center;
+        }
+        
+        #myTable th {
+            background-color: #27ae60;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -118,15 +124,29 @@
         E-Voting Application
     </header>
 
+    <div class="navbar">
+        <a href="/vote.html">Vote</a>
+        <a href="/ListVoters.html">List Voters</a>
+    </div>
+
+    <div class="container">Welcome to the Decentralized Voting Application</div>
+
+    <div>
+        <button onclick="connectMetamask()">Connect Metamask</button>
+        <p id="metamasknotification"></p>
+    </div>
+
     <div class="container">
-        <h1>Login</h1>
-        <form>
-            <input type="text" id="voterid" placeholder="Enter Voter ID" required><br>
-            <input type="text" id="aadhaarid" placeholder="Enter Aadhaar ID" required><br>
-            <input type="date" id="dob" placeholder="Enter Date of Birth" required><br>
-            <input type="text" id="locality" placeholder="Enter Place of Residence/Voting Locality" required><br>
-            <button type="submit">Login</button>
-        </form>
+        <span>Vote here</span>
+        <input type="number" id="vote" placeholder="Add Index of the Voter ... ">
+        <button onclick="addVote()">Add Vote</button>
+        <p id="cand"></p>
+    </div>
+    
+    <div>
+        <button onclick="voteStatus()">Check Voting Status</button>
+        <p id="status"></p>
+        <p id="time"></p>
     </div>
 
     <footer>
