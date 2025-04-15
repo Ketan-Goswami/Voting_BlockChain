@@ -95,7 +95,7 @@ app.post("/register", async (req, res) => {
 
 app.post("/addCandidate", async (req, res) => {
     const vote = req.body.vote;
-    console.log("Received vote:", vote);
+    console.log("Candidate Added:", vote);
 
     try {
         const votingOpen = await contractInstance.getVotingStatus();
