@@ -1,5 +1,5 @@
 let WALLET_CONNECTED = "";
-let contractAddress = "0xf072644FDFB38dA997BADE50d934a87634E77B2C";
+let contractAddress = "0xC21DE6992c89475624f41f779133Bd9aAf5d790A";
 let contractAbi = [
     {
       "inputs": [
@@ -174,24 +174,66 @@ const connectMetamask = async() => {
     element.innerHTML = "Metamask is connected " + WALLET_CONNECTED;
 }
 
-const addVote = async() => {
-    if(WALLET_CONNECTED != 0) {
-        var name = document.getElementById("vote");
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        const signer = provider.getSigner();
-        const contractInstance = new ethers.Contract(contractAddress, contractAbi, signer);
-        var cand = document.getElementById("cand");
-        cand.innerHTML = "Please wait, adding a vote in the smart contract";
-        const tx = await contractInstance.vote(name.value);
-        await tx.wait();
-        cand.innerHTML = "Vote added !!!";
+const addVote = async () => {
+  const cand = document.getElementById("cand");
+
+  if (!WALLET_CONNECTED) {
+      cand.innerHTML = "Please connect Metamask first.";
+      return;
+  }
+
+  const index = document.getElementById("vote").value;
+  const provider = new ethers.providers.Web3Provider(window.ethereum);
+  await provider.send("eth_requestAccounts", []);
+  const signer = provider.getSigner();
+  const contract = new ethers.Contract(contractAddress, contractAbi, signer);
+
+  try {
+      const votingOpen = await contract.getVotingStatus();
+      if (!votingOpen) {
+          cand.innerHTML = "Voting period has ended or not started yet.";
+          return;
+      }
+
+      const candidates = await contract.getAllVotesOfCandiates();
+
+      if (!index || isNaN(index) || index < 0 || index >= candidates.length) {
+          cand.innerHTML = `Invalid candidate index. Please choose between 0 and ${candidates.length - 1}.`;
+          return;
+      }
+
+      cand.innerHTML = "Submitting vote...";
+
+      const hasVoted = await contract.voters(WALLET_CONNECTED);
+        if (hasVoted) {
+            cand.innerHTML = "You have already voted.";
+            return;
+        }
+
+      const tx = await contract.vote(index);
+      await tx.wait();
+      cand.innerHTML = "Vote successfully recorded.";
+
+  } catch (error) {
+    console.error("Voting error:", error);
+
+    let msg = "";
+
+    if (error?.error?.message) msg = error.error.message;
+    else if (error?.reason) msg = error.reason;
+    else if (error?.message) msg = error.message;
+    else msg = error.toString();
+
+    if (msg.toLowerCase().includes("already voted")) {
+        cand.innerHTML = "You have already voted.";
+    } else if (msg.toLowerCase().includes("voting has not started")) {
+        cand.innerHTML = "Voting has not started yet.";
+    } else {
+        cand.innerHTML = "An error occurred while voting.";
     }
-    else {
-        var cand = document.getElementById("cand");
-        cand.innerHTML = "Please connect metamask first";
-    }
+  }
 }
+
 
 const voteStatus = async() => {
     if(WALLET_CONNECTED != 0) {
@@ -202,10 +244,27 @@ const voteStatus = async() => {
         const signer = provider.getSigner();
         const contractInstance = new ethers.Contract(contractAddress, contractAbi, signer);
         const currentStatus = await contractInstance.getVotingStatus();
-        const time = await contractInstance.getRemainingTime();
-        console.log(time);
+        let time = parseInt(await contractInstance.getRemainingTime(), 16);
+        const formatTime = (seconds) => {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            return `${hours}h ${minutes}m ${secs}s`;
+        };
+        
         status.innerHTML = currentStatus == 1 ? "Voting is currently open" : "Voting is finished";
-        remainingTime.innerHTML = `Remaining time is ${parseInt(time, 16)} seconds`;
+        remainingTime.innerHTML = `Remaining time: ${formatTime(time)}`;
+        
+        // Update time every second if voting is open
+        if (currentStatus == 1) {
+            setInterval(async () => {
+                time = Math.max(0, time - 1);
+                remainingTime.innerHTML = `Remaining time: ${formatTime(time)}`;
+                if (time <= 0) {
+                    status.innerHTML = "Voting is finished";
+                }
+            }, 1000);
+        }
     }
     else {
         var status = document.getElementById("status");
@@ -214,8 +273,13 @@ const voteStatus = async() => {
 }
 
 const getAllCandidates = async() => {
-    
     var p3 = document.getElementById("p3");
+
+    if (!WALLET_CONNECTED) {
+        p3.innerHTML = "Please connect MetaMask first.";
+        return;
+    }
+
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     await provider.send("eth_requestAccounts", []);
     const signer = provider.getSigner();
@@ -224,6 +288,9 @@ const getAllCandidates = async() => {
     var candidates = await contractInstance.getAllVotesOfCandiates();
     console.log(candidates);
     var table = document.getElementById("myTable");
+
+    // Clear existing table rows
+    // table.innerHTML = "";
 
     for (let i = 0; i < candidates.length; i++) {
         var row = table.insertRow();
@@ -236,6 +303,6 @@ const getAllCandidates = async() => {
         vc.innerHTML = candidates[i].voteCount;
     }
 
-    p3.innerHTML = "The Candidate list is updated"
-    
+    p3.innerHTML = "The Candidate list is updated";
+  
 }
